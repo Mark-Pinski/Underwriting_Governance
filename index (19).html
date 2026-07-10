@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Global Underwriting Governance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+:root{
+  --aig-navy:#0a2a66;        /* deep navy */
+  --aig-blue:#00529b;        /* primary blue */
+  --aig-blue-d:#063a73;
+  --ink:#242424;
+  --ink-2:#605e5c;
+  --line:#e1dfdd;
+  --line-2:#edebe9;
+  --bg:#faf9f8;              /* canvas */
+  --white:#ffffff;
+  --accent:#c4122f;          /* nav underline accent */
+  --ready:#0b6a3a;
+  --ready-bg:#e7f4ec;
+  --pending:#8a6100;
+  --pending-bg:#fdf3df;
+  --shadow:0 1.6px 3.6px rgba(0,0,0,.13),0 .3px .9px rgba(0,0,0,.10);
+  --shadow-lg:0 6.4px 14.4px rgba(0,0,0,.13),0 1.2px 3.6px rgba(0,0,0,.10);
+  --r:6px;
+  --font:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:var(--aig-blue);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:inherit}
+ul{margin:0 0 10px;padding-left:20px}
+li{margin-bottom:4px}
+
+/* ---------- Suite bar ---------- */
+.suitebar{background:var(--aig-navy);color:#fff;height:40px;display:flex;align-items:center;padding:0 18px;font-size:13px;gap:16px}
+.suitebar .sb-title{font-weight:600;letter-spacing:.2px;opacity:.95}
+.suitebar .sb-right{margin-left:auto;display:flex;align-items:center;gap:16px;opacity:.85;font-size:12px}
+
+/* ---------- Site header ---------- */
+.sitehead{background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:14px 28px;flex-wrap:wrap}
+.brand-logo{border:2.5px solid var(--aig-navy);color:var(--aig-navy);font-weight:800;font-size:20px;letter-spacing:1px;padding:3px 10px;border-radius:3px;line-height:1}
+.brand-connect{color:var(--aig-navy);font-weight:600;font-size:18px;margin-left:-4px}
+.sitehead .titles{display:flex;flex-direction:column;gap:1px;border-left:1px solid var(--line);padding-left:16px;margin-left:6px}
+.sitehead .stitle{font-size:17px;font-weight:700;color:var(--ink)}
+.sitehead .ssub{font-size:12px;color:var(--ink-2)}
+.sitehead .head-right{margin-left:auto;display:flex;align-items:center;gap:11px;color:var(--ink-2);font-size:13px}
+.head-right .who{line-height:1.25;text-align:right}
+.head-right .who .nm{font-weight:600;color:var(--ink);font-size:13.5px}
+.head-right .who .rl{font-size:12px;color:var(--ink-2)}
+.head-right .avatar{width:34px;height:34px;border-radius:50%;background:var(--aig-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0}
+
+/* ---------- Nav ---------- */
+.nav{background:var(--white);border-bottom:1px solid var(--line-2);padding:0 28px;display:flex;align-items:center;gap:2px;position:sticky;top:0;z-index:55;overflow-x:auto}
+.nav button{background:none;border:none;padding:14px 16px;font-size:13.5px;color:var(--ink-2);cursor:pointer;position:relative;white-space:nowrap;font-weight:600}
+.nav button:hover{color:var(--ink)}
+.nav button.active{color:var(--ink)}
+.nav button.active::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:3px;background:var(--accent);border-radius:2px}
+
+/* ---------- Scope ribbon ---------- */
+.ribbon{background:#f3f6fb;border-bottom:1px solid #dbe6f5;padding:7px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
+.ribbon .legend{display:flex;align-items:center;gap:7px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot.ready{background:var(--ready)}
+.dot.pending{background:var(--pending)}
+.ribbon .spacer{flex:1}
+
+/* ---------- Canvas / page routing ---------- */
+.canvas{max-width:1180px;margin:0 auto;padding:22px 28px 80px}
+.page{display:none}
+.page.active{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.pagehead{display:flex;align-items:flex-end;gap:14px;margin:6px 0 18px;flex-wrap:wrap}
+.pagehead h1{font-size:28px;font-weight:700;margin:0}
+.pagehead .scope-tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:11px;border:1px solid;margin-bottom:5px}
+.scope-ready{color:var(--ready);background:var(--ready-bg);border-color:#bfe2cd}
+.scope-pending{color:var(--pending);background:var(--pending-bg);border-color:#f0dca6}
+.lead{color:var(--ink-2);font-size:14px;max-width:780px;margin:-8px 0 22px}
+
+/* ---------- Web parts ---------- */
+.wp{background:var(--white);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:22px}
+.wp-h{padding:14px 18px 0;display:flex;align-items:center;gap:10px}
+.wp-h h2{font-size:17px;font-weight:600;margin:0;color:var(--aig-navy)}
+.wp-b{padding:14px 18px 18px}
+.wp-h .more{margin-left:auto;color:var(--ink-2);font-size:12px}
+.wp-b p{margin:0 0 10px}
+.wp-b h3{font-size:14px;margin:16px 0 8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+/* ---------- Hero (square links) ---------- */
+.hero{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:140px 140px;gap:10px;margin-bottom:22px}
+.tile{position:relative;border-radius:4px;overflow:hidden;cursor:pointer;color:#fff;display:flex;align-items:flex-end;padding:16px;background:var(--aig-navy);box-shadow:var(--shadow);border:none;text-align:left;font-family:inherit}
+.tile.big{grid-row:span 2}
+.tile.alt{background:var(--aig-blue)}
+.tile .tx{position:relative;z-index:2}
+.tile .tx .t{font-size:17px;font-weight:600;line-height:1.25}
+.tile.big .tx .t{font-size:22px}
+.tile .tx .more{font-size:12px;opacity:.92;margin-top:6px;display:inline-block}
+
+/* ---------- Doc/list rows ---------- */
+.doclist{border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.docrow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line-2);font-size:13.5px;cursor:pointer;background:#fff}
+.docrow:last-child{border-bottom:none}
+.docrow:hover{background:#f6f9fd}
+.docrow .fi{width:26px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:9.5px;border-radius:2px;color:#fff}
+.docrow .meta{margin-left:auto;color:var(--ink-2);font-size:12px;white-space:nowrap}
+.fi.pdf{background:#a4262c}.fi.xls{background:#107c41}.fi.ppt{background:#c43e1c}.fi.doc{background:#185abd}
+
+.subhead{font-size:13px;font-weight:700;color:var(--ink);margin:20px 0 9px}
+.subhead:first-child{margin-top:4px}
+.muted{color:var(--ink-2)}
+
+/* ---------- Badges ---------- */
+.badge{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:10px;border:1px solid;white-space:nowrap;display:inline-block}
+.b-ready{color:var(--ready);background:var(--ready-bg);border-color:#bfe2cd}
+.b-pending{color:var(--pending);background:var(--pending-bg);border-color:#f0dca6}
+
+/* ---------- Roster ---------- */
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.rcard{border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;gap:12px;align-items:flex-start;background:#fff}
+.rcard .rav{width:46px;height:46px;border-radius:50%;background:var(--aig-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0}
+.rcard .nm{font-weight:600;font-size:14px}
+.rcard .rl{color:var(--ink-2);font-size:12px;margin-top:2px}
+.rcard .loc{color:var(--ink-2);font-size:11.5px;margin-top:5px}
+
+/* ---------- KPI band ---------- */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:#fff}
+.kpi .num{font-size:26px;font-weight:700;color:var(--aig-navy)}
+.kpi .lbl{font-size:12px;color:var(--ink-2);margin-top:2px}
+.kpi .delta{font-size:11.5px;margin-top:6px;font-weight:600}
+.kpi .delta.pos{color:var(--ready)}
+.kpi .delta.watch{color:var(--pending)}
+
+table.data{width:100%;border-collapse:collapse;font-size:13px}
+table.data th{text-align:left;background:var(--bg);border-bottom:2px solid var(--line);padding:9px 10px;font-weight:600;color:var(--aig-navy)}
+table.data td{padding:9px 10px;border-bottom:1px solid var(--line-2)}
+table.data tr:last-child td{border-bottom:none}
+.pos{color:var(--ready);font-weight:700}
+.watch{color:var(--pending);font-weight:700}
+
+.stage-flow{display:flex;gap:4px;margin:14px 0;flex-wrap:wrap}
+.stage-flow .stage{flex:1;min-width:140px;background:var(--aig-navy);color:#fff;padding:10px 12px;font-size:12px;font-weight:600;text-align:center;border-radius:3px}
+
+footer.gu-footer{border-top:1px solid var(--line);margin-top:20px;padding:18px 28px;font-size:11.5px;color:var(--ink-2);text-align:center}
+
+/* ---------- Role switcher ---------- */
+.rolebtn{border:1px solid var(--line);background:#fff;color:var(--ink-2);border-radius:14px;padding:5px 14px;font-size:12.5px;cursor:pointer;font-weight:600}
+.rolebtn:hover{border-color:var(--aig-blue)}
+.rolebtn.active{background:var(--aig-navy);color:#fff;border-color:var(--aig-navy)}
+.docrow.role-hidden{display:none}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;grid-template-rows:none}
+  .tile{min-height:130px}
+  .tile.big{grid-row:auto}
+  .two-col,.kpis{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ SUITE BAR ============ -->
+<div class="suitebar">
+  <span class="sb-title">ACME-Connect</span>
+  <div class="sb-right">
+    <span>Sanitized mockup &middot; no production data</span>
+  </div>
+</div>
+
+<!-- ============ SITE HEADER ============ -->
+<div class="sitehead">
+  <span class="brand-logo">ACME</span>
+  <span class="brand-connect">-Connect</span>
+  <div class="titles">
+    <span class="stitle">Global Underwriting Governance</span>
+    <span class="ssub">Underwriting Authority &middot; Quality Reviews &middot; Product Governance</span>
+  </div>
+  <div class="head-right">
+    <div class="who"><div class="nm">John Doe 3</div><div class="rl">Approver</div></div>
+    <div class="avatar">JD</div>
+  </div>
+</div>
+
+<!-- ============ NAV ============ -->
+<div class="nav" id="nav">
+  <button data-page="home" onclick="go('home')">Home</button>
+  <button data-page="about" onclick="go('about')">About</button>
+  <button data-page="tools" onclick="go('tools')">UW Tools &amp; Guardrails</button>
+  <button data-page="peer" onclick="go('peer')">Quality &amp; Peer Reviews</button>
+  <button data-page="reporting" onclick="go('reporting')">Reporting &amp; Analytics</button>
+  <button data-page="documents" onclick="go('documents')">Documents</button>
+</div>
+
+<!-- ============ SCOPE RIBBON ============ -->
+<div class="ribbon">
+  <span class="legend"><span class="dot ready"></span> Live today</span>
+  <span class="legend"><span class="dot pending"></span> In development</span>
+  <span class="spacer"></span>
+  <span>Sanitized design mockup &mdash; ACME Insurance Group</span>
+</div>
+
+<!-- ============ CANVAS ============ -->
+<div class="canvas">
+
+  <!-- ============ HOME ============ -->
+  <section class="page active" id="page-home">
+    <div class="hero">
+      <button class="tile big" onclick="go('about')">
+        <div class="tx"><div class="t">About Global Underwriting Governance</div><span class="more">LEARN MORE &rarr;</span></div>
+      </button>
+      <button class="tile" onclick="go('peer')">
+        <div class="tx"><div class="t">Underwriting Quality Reviews</div></div>
+      </button>
+      <button class="tile alt" onclick="go('peer')">
+        <div class="tx"><div class="t">Global Insurance UW Peer Review</div></div>
+      </button>
+      <button class="tile alt" onclick="go('tools')">
+        <div class="tx"><div class="t">UW Tools &amp; Guardrails</div></div>
+      </button>
+      <button class="tile" onclick="go('reporting')">
+        <div class="tx"><div class="t">Reporting &amp; Analytics</div></div>
+      </button>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Announcements</h2></div>
+      <div class="wp-b">
+        <p><b>All systems normal.</b> No outages or planned maintenance right now. This banner is where we'll post it if that changes &mdash; the same pattern Team Think uses so people don't have to go dig for status updates.</p>
+        <p class="muted" style="margin-top:8px;">Underwriting Authority Management is being rebuilt on a new platform. Look &amp; feel is being finalized first; the system has no live data yet. See <a href="#" onclick="go('reporting');return false;">Reporting &amp; Analytics</a> for current build status.</p>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Quick actions</h2><span class="more">Signed in as:</span></div>
+      <div class="wp-b">
+        <p class="muted">What you see here depends on your role. Try switching roles below &mdash; this is exactly the access model from the authority system design: an underwriter sees the core lookup tools, a submitter gets one more function, an approver gets the approval queue, and a super user sees everything.</p>
+        <div id="roleSwitch" style="display:flex;gap:6px;margin:10px 0 16px;flex-wrap:wrap;">
+          <button class="rolebtn" data-role="underwriter" onclick="setRole('underwriter')">Underwriter</button>
+          <button class="rolebtn" data-role="submitter" onclick="setRole('submitter')">Submitter</button>
+          <button class="rolebtn active" data-role="approver" onclick="setRole('approver')">Approver</button>
+          <button class="rolebtn" data-role="superuser" onclick="setRole('superuser')">Super User</button>
+        </div>
+        <div class="doclist" id="actionList">
+          <div class="docrow" data-roles="underwriter,submitter,approver,superuser" onclick="go('tools')"><span class="fi doc">UW</span> Look Up Underwriter <span class="meta">Search by employee ID or name</span></div>
+          <div class="docrow" data-roles="underwriter,submitter,approver,superuser" onclick="go('tools')"><span class="fi doc">AS</span> View Authority Statement <span class="meta">Product, jurisdiction &amp; limits</span></div>
+          <div class="docrow" data-roles="underwriter,submitter,approver,superuser" onclick="go('peer')"><span class="fi doc">AV</span> Authority Violations <span class="meta">Referred / escalated items</span></div>
+          <div class="docrow" data-roles="submitter,approver,superuser" onclick="return false;"><span class="fi doc">SR</span> Submit Authority Request <span class="meta badge b-pending">In development</span></div>
+          <div class="docrow" data-roles="approver,superuser" onclick="return false;"><span class="fi doc">AP</span> Approve Requests <span class="meta">3 pending your review</span></div>
+          <div class="docrow" data-roles="approver,superuser" onclick="return false;"><span class="fi doc">DL</span> Delegate Authority <span class="meta badge b-pending">In development</span></div>
+          <div class="docrow" data-roles="superuser" onclick="return false;"><span class="fi doc">CR</span> Create New Underwriter <span class="meta badge b-pending">In development</span></div>
+          <div class="docrow" data-roles="superuser" onclick="go('reporting')"><span class="fi doc">RP</span> Generate Reports <span class="meta badge b-pending">In development</span></div>
+        </div>
+        <p class="muted" id="roleCount" style="font-size:11.5px;margin-top:10px;"></p>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>News</h2></div>
+      <div class="wp-b">
+        <div class="roster">
+          <div class="rcard">
+            <div class="rav">JD</div>
+            <div><div class="nm">Global peer review guidelines refreshed for 2026</div><div class="rl">Updated file selection guidance and a single quota framework across review cycles.</div><div class="loc">John Doe 2 &middot; 2 days ago</div></div>
+          </div>
+          <div class="rcard">
+            <div class="rav">JD</div>
+            <div><div class="nm">Financial Lines questionnaire updates now live</div><div class="rl">Applies to audits started on or after the effective date.</div><div class="loc">John Doe 1 &middot; 1 week ago</div></div>
+          </div>
+          <div class="rcard">
+            <div class="rav">GU</div>
+            <div><div class="nm">Product Governance: one global business case template</div><div class="rl">Replaces jurisdiction- and product-line-specific templates.</div><div class="loc">UW Governance &middot; 3 weeks ago</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Quick reference guides</h2></div>
+      <div class="wp-b">
+        <p class="muted" style="margin-top:-4px;">Kept below the fold on purpose &mdash; useful, but not the first thing someone needs.</p>
+        <div class="doclist">
+          <div class="docrow" onclick="openLink('guideAuthStatement')"><span class="fi pdf">PDF</span> Reading your Underwriting Authority Statement</div>
+          <div class="docrow" onclick="openLink('guideAuthLevels')"><span class="fi pdf">PDF</span> Authority Levels explained (L1&ndash;L3)</div>
+          <div class="docrow" onclick="openLink('guideQuota')"><span class="fi pdf">PDF</span> How peer review quotas are calculated</div>
+          <div class="docrow" onclick="openLink('guideTiers')"><span class="fi pdf">PDF</span> Product Governance: Tier 1 vs. Tier 2 vs. out of scope</div>
+        </div>
+        <p style="margin-top:14px;font-size:13px;">Can't find what you need? <a href="#" onclick="go('about');return false;">Get help</a> from the UW Governance team.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+
+  <section class="page" id="page-about">
+    <div class="pagehead"><h1>About Global Underwriting Governance</h1></div>
+    <p class="lead">One home for the frameworks, tools and reporting that keep underwriting activity consistent, compliant and well documented &mdash; from the authority an underwriter is granted, to how that authority is reviewed and reported on.</p>
+
+    <div class="wp">
+      <div class="wp-h"><h2>What this site is for</h2></div>
+      <div class="wp-b">
+        <p>Global Underwriting Governance brings together three things that used to live in separate, jurisdiction-specific places: Underwriting Authority management, Underwriting Quality (peer) Reviews, and Product Governance. The goal is one consistent framework, one place to find guidance, and one reporting layer that leadership can actually use to act on.</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="wp">
+        <div class="wp-h"><h2>Who it's for</h2></div>
+        <div class="wp-b">
+          <p><b>Underwriters</b> &mdash; look up your own authority statement and applicable guidelines.</p>
+          <p><b>Submitters</b> &mdash; request new, amended or expanded authority on behalf of your team.</p>
+          <p><b>Approvers</b> &mdash; review and approve authority requests and peer review recommendations.</p>
+          <p><b>Global CUOs &amp; Functional Leads</b> &mdash; approve Tier 2 product initiatives and monitor governance KPIs.</p>
+        </div>
+      </div>
+      <div class="wp">
+        <div class="wp-h"><h2>How the pieces fit together</h2></div>
+        <div class="wp-b">
+          <p><a href="#" onclick="go('tools');return false;">UW Tools &amp; Guardrails</a> defines what an underwriter is allowed to do.</p>
+          <p><a href="#" onclick="go('peer');return false;">Underwriting Quality Reviews</a> checks that activity stays inside those guardrails.</p>
+          <p><a href="#" onclick="go('reporting');return false;">Reporting &amp; Analytics</a> turns both into KPIs leadership can act on.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Contacts</h2></div>
+      <div class="wp-b">
+        <div class="roster">
+          <div class="rcard">
+            <div class="rav">JD</div>
+            <div><div class="nm">John Doe 1</div><div class="rl">Head of UW Governance &mdash; Personal Insurance Products &amp; Product Development, GI</div></div>
+          </div>
+          <div class="rcard">
+            <div class="rav">JD</div>
+            <div><div class="nm">John Doe 2</div><div class="rl">UW Governance Analyst, GI CUO</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ UW TOOLS & GUARDRAILS ============ -->
+  <section class="page" id="page-tools">
+    <div class="pagehead"><h1>UW Tools &amp; Guardrails</h1><span class="scope-tag scope-ready">Live today</span></div>
+    <p class="lead">The frameworks that define what an underwriter can do, and how new or changed products get approved before they reach the market.</p>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Underwriting Authority, in plain terms</h2></div>
+      <div class="wp-b">
+        <p>An Underwriting Authority is best thought of like a driver's license: it names the product, jurisdiction and business segment you're permitted to write for ACME, and sets the maximum limits within which you can operate. Writing outside those limits &mdash; without referring the risk to someone who holds the right authority &mdash; is an authority violation.</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="wp">
+        <div class="wp-h"><h2>Personal Underwriting Authority Statement</h2></div>
+        <div class="wp-b">
+          <p>The first component of your authority. It conveys:</p>
+          <ul>
+            <li>The product, jurisdiction and business segment you're permitted to write</li>
+            <li>Your capacity, i.e. maximum limits (Authority Level)</li>
+            <li>Any grants or restrictions for specific business (e.g., multinational risks)</li>
+          </ul>
+          <h3>Sample statement</h3>
+          <div style="background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:12px 14px;font-size:13px;">
+            <p style="margin:0 0 8px;">You have been granted authority to write risks on a co-insurance basis up to ACME <b>50%</b> share (max USD <b>25m</b> any one risk), on accounts within the Business Package risk appetite and line sheet.</p>
+            <p style="margin:0;">This authority is limited to Property risks located in <b>New Zealand</b> only.</p>
+          </div>
+        </div>
+      </div>
+      <div class="wp">
+        <div class="wp-h"><h2>Authority Levels</h2></div>
+        <div class="wp-b">
+          <table class="data">
+            <tr><th>Level</th><th>Typical use</th></tr>
+            <tr><td>L1</td><td>Entry-level authority, narrowest limits</td></tr>
+            <tr><td>L2</td><td>Standard working authority</td></tr>
+            <tr><td>L3</td><td>Senior / highest standard authority</td></tr>
+            <tr><td>L4 &ndash; L5</td><td class="muted">Retired for Commercial Property since March 2025</td></tr>
+            <tr><td>Zero authority</td><td>Training tool for new joiners &amp; junior underwriters</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Underwriting Guidelines, Rules &amp; Bulletins</h2></div>
+      <div class="wp-b">
+        <p>These supplement the Authority Statement. They're developed by the Product CUO organizations and cover additional detail, restrictions or considerations for certain risks, segments or jurisdictions &mdash; for example, the Four-Eye Principle on specified risk types.</p>
+        <div class="doclist">
+          <div class="docrow" onclick="openLink('guideCommercialProperty')"><span class="fi doc">WEB</span> Global Commercial Property guidelines</div>
+          <div class="docrow" onclick="openLink('guideCasualty')"><span class="fi doc">WEB</span> Global Casualty guidelines</div>
+          <div class="docrow" onclick="openLink('guideFinancialLines')"><span class="fi doc">WEB</span> Global Financial Lines guidelines</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pagehead" style="margin-top:8px;"><h1 style="font-size:22px;">Product Governance Framework</h1></div>
+    <p class="lead" style="margin-top:-8px;">Applies to material product revisions, expansion into a new country, breakthrough/new products, and market entries or re-entries. Covers four elements: <b>Forms</b>, <b>Rates</b>, <b>Rules</b>, and <b>Processes</b> (including but not limited to Claims, Distribution, Operations and Reinsurance).</p>
+
+    <div class="two-col">
+      <div class="wp">
+        <div class="wp-h"><h2>Tier 1</h2><span class="badge b-ready" style="margin-left:auto">Global PD Governance</span></div>
+        <div class="wp-b">
+          <p>Material or significant revision of an existing product, or expansion into a new country. Applies when the change:</p>
+          <ul>
+            <li>Changes ACME's risk profile (including regulator-driven changes)</li>
+            <li>Offers an existing product in a market where ACME is already present, for the first time</li>
+            <li>Reintroduces a product, or changes it, after it wasn't actively sold</li>
+            <li>Requires material changes to internal processes or resources</li>
+            <li>Uses a distribution channel or method new to that country</li>
+          </ul>
+        </div>
+      </div>
+      <div class="wp">
+        <div class="wp-h"><h2>Tier 2</h2><span class="badge b-pending" style="margin-left:auto">CUO + Functional Lead approval</span></div>
+        <div class="wp-b">
+          <p>Breakthrough / new products and market entries or re-entries. Applies when at least one condition is met:</p>
+          <ul>
+            <li>Has not previously been offered by ACME in any country</li>
+            <li>Novel design or major overhaul that materially changes ACME's global risk profile</li>
+            <li>The first product offered in a new country for ACME</li>
+            <li>The first product for a market re-entry, 5+ years after exit</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Stage-gate approval process (Tier 1 &amp; Tier 2)</h2></div>
+      <div class="wp-b">
+        <div class="stage-flow">
+          <div class="stage">Inform Global PD Governance</div>
+          <div class="stage">Approval &amp; Validation</div>
+          <div class="stage">Development &amp; Manufacturing</div>
+          <div class="stage">Implementation &amp; Launch</div>
+          <div class="stage">After Launch Monitoring</div>
+        </div>
+        <table class="data">
+          <tr><th>Stage</th><th>Minimum documentation</th></tr>
+          <tr><td>1. Approval to build</td><td>Tiering Assessment &amp; Business Case (Part 1 &amp; 2), PD Forum minutes where required</td></tr>
+          <tr><td>2. Build</td><td>Forms drafting, rates development &amp; filing</td></tr>
+          <tr><td>3. Launch</td><td>Pre-launch checklist, Post-launch review</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUALITY & PEER REVIEW ============ -->
+  <section class="page" id="page-peer">
+    <div class="pagehead"><h1>Underwriting Quality Reviews &amp; Global Insurance UW Peer Review</h1><span class="scope-tag scope-ready">Live today</span></div>
+    <p class="lead">Peer review exists because audit capacity is finite &mdash; most portfolios are examined by internal audit only once every few years. In between, senior underwriters in the field review the files their peers write, on a quarterly, semi-annual or annual cycle depending on the product.</p>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Why peer review matters</h2></div>
+      <div class="wp-b">
+        <p>A senior underwriter reviewing their own product line day to day catches things a periodic audit can miss &mdash; and catches them sooner. The value only holds up if reviews are actually completed, and if they surface real findings rather than becoming a checkbox exercise. A high completion percentage on its own doesn't tell leadership much; a queue with strong completion and zero recommendations for a year, sitting next to a short audit that finds several issues, is itself a signal worth a closer look.</p>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="num">86%</div><div class="lbl">Reviews completed, current period</div><div class="delta pos">+9 pts vs. prior</div></div>
+      <div class="kpi"><div class="num">77%</div><div class="lbl">Reviews completed, prior period</div><div class="delta">baseline</div></div>
+      <div class="kpi"><div class="num">14</div><div class="lbl">Open recommendations</div><div class="delta watch">4 overdue &gt; 30 days</div></div>
+      <div class="kpi"><div class="num">3</div><div class="lbl">Products with zero findings, 12 mo.</div><div class="delta watch">flagged for file-selection review</div></div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Completion by product &mdash; current vs. prior period</h2></div>
+      <div class="wp-b">
+        <table class="data">
+          <tr><th>Product</th><th>Review cycle</th><th>Current period</th><th>Prior period</th><th>Open recommendations</th></tr>
+          <tr><td>Commercial Property</td><td>Semi-annual</td><td class="pos">92%</td><td>81%</td><td>2</td></tr>
+          <tr><td>Casualty</td><td>Semi-annual</td><td class="pos">88%</td><td>84%</td><td>3</td></tr>
+          <tr><td>Financial Lines</td><td>Quarterly</td><td class="pos">90%</td><td>79%</td><td>1</td></tr>
+          <tr><td>Service Programs</td><td>Semi-annual / Annual</td><td class="watch">68%</td><td>74%</td><td>0</td></tr>
+          <tr><td>Personal Insurance &mdash; A&amp;H</td><td>Semi-annual</td><td class="pos">89%</td><td>80%</td><td>5</td></tr>
+          <tr><td>Personal Insurance &mdash; International</td><td>Semi-annual</td><td class="watch">71%</td><td>69%</td><td>3</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="wp">
+        <div class="wp-h"><h2>Reading the numbers</h2></div>
+        <div class="wp-b">
+          <p>A completion figure by itself &mdash; "117% of quota" &mdash; doesn't say whether that's a healthy program or a sign the quota itself needs revisiting. We pair completion with recommendation volume so a quiet queue and a busy one are easy to tell apart.</p>
+          <p>Where a product shows strong completion and no recommendations over an extended period, the follow-up question is usually about file selection: are the highest-risk files actually the ones being reviewed?</p>
+        </div>
+      </div>
+      <div class="wp">
+        <div class="wp-h"><h2>Data quality note</h2></div>
+        <div class="wp-b">
+          <p>Service Programs' review population is small enough that individual cases stand out: this period's report flagged underwriters who were deprovisioned some time ago but still appear against an active quota. Where a reviewer left mid-period, they should appear for the period they were active and drop out after &mdash; we're reconciling a handful of these before the figures roll up to leadership.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Review cycle rules</h2></div>
+      <div class="wp-b">
+        <p>Underwriters holding both a Warranty and a Plus designation require one reviewed account per year in each. Underwriters holding only a Plus designation require two reviewed accounts per year. Cross-regional reviews (e.g., an APAC reviewer covering a US portfolio) are supported but tracked separately by folder.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ REPORTING & ANALYTICS ============ -->
+  <section class="page" id="page-reporting">
+    <div class="pagehead"><h1>Reporting &amp; Analytics</h1><span class="scope-tag scope-pending">In development</span></div>
+    <p class="lead">A Power BI-backed reporting layer for authority and peer review data, built around the KPIs leadership actually uses to decide whether to act.</p>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Status</h2></div>
+      <div class="wp-b">
+        <p><b>In development.</b> The underlying data model &mdash; joining authority, quota and peer review tables into a single reporting layer &mdash; is being built. Today's system produces flat spreadsheet exports by product; the tables below show the direction for the dashboard experience once the data model is in place.</p>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Planned dashboard modules</h2></div>
+      <div class="wp-b">
+        <table class="data">
+          <tr><th>Module</th><th>Status</th></tr>
+          <tr><td>Authority lookup &amp; export</td><td class="pos">Live (spreadsheet export)</td></tr>
+          <tr><td>Peer review completion (current vs. prior)</td><td class="watch">Data model in progress</td></tr>
+          <tr><td>Authority violations tracker</td><td class="watch">Design phase</td></tr>
+          <tr><td>Underwriters by region (map view)</td><td class="watch">Design phase</td></tr>
+          <tr><td>Recommendation aging (open/overdue)</td><td class="muted">Not started</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Concept &mdash; underwriters by region</h2><span class="badge b-pending" style="margin-left:auto">Design phase</span></div>
+      <div class="wp-b">
+        <p>From the design discussion: a world map with markers sized by underwriter headcount, filterable by product and authority level &mdash; click into a region to see who's there. Individual countries are grouped into regions where the population is too small to plot on its own (e.g., Middle East, LatAm).</p>
+        <svg viewBox="0 0 400 190" style="width:100%;height:auto;background:#eaf1f8;border:1px solid var(--line);border-radius:5px;margin-top:8px;">
+          <rect width="400" height="190" fill="#eaf1f8"/>
+          <!-- graticule -->
+          <g stroke="#d3e0ee" stroke-width="0.6">
+            <line x1="0" y1="47.5" x2="400" y2="47.5"/>
+            <line x1="0" y1="95" x2="400" y2="95"/>
+            <line x1="0" y1="142.5" x2="400" y2="142.5"/>
+            <line x1="66" y1="0" x2="66" y2="190"/>
+            <line x1="133" y1="0" x2="133" y2="190"/>
+            <line x1="200" y1="0" x2="200" y2="190"/>
+            <line x1="266" y1="0" x2="266" y2="190"/>
+            <line x1="333" y1="0" x2="333" y2="190"/>
+          </g>
+          <!-- landmasses (stylized, not geographically precise) -->
+          <g fill="#c7d6e8" stroke="#b3c6dd" stroke-width="0.8">
+            <!-- North America -->
+            <ellipse cx="88" cy="52" rx="46" ry="29"/>
+            <ellipse cx="68" cy="88" rx="26" ry="24"/>
+            <!-- South America -->
+            <ellipse cx="140" cy="136" rx="21" ry="39"/>
+            <!-- Europe -->
+            <ellipse cx="214" cy="52" rx="24" ry="17"/>
+            <!-- Africa -->
+            <ellipse cx="226" cy="116" rx="27" ry="39"/>
+            <!-- Asia -->
+            <ellipse cx="300" cy="58" rx="54" ry="34"/>
+            <ellipse cx="322" cy="93" rx="34" ry="24"/>
+            <!-- Australia -->
+            <ellipse cx="341" cy="156" rx="21" ry="13"/>
+          </g>
+          <!-- region markers -->
+          <circle cx="95" cy="75" r="15" fill="var(--aig-navy)" opacity="0.92" stroke="#fff" stroke-width="1"/>
+          <text x="95" y="79" font-size="9" fill="#fff" text-anchor="middle" font-family="Segoe UI">NA</text>
+          <circle cx="205" cy="60" r="10" fill="var(--aig-blue)" opacity="0.92" stroke="#fff" stroke-width="1"/>
+          <text x="205" y="63" font-size="8" fill="#fff" text-anchor="middle" font-family="Segoe UI">UK</text>
+          <circle cx="230" cy="70" r="8" fill="var(--aig-blue)" opacity="0.92" stroke="#fff" stroke-width="1"/>
+          <text x="230" y="73" font-size="7" fill="#fff" text-anchor="middle" font-family="Segoe UI">EU</text>
+          <ellipse cx="150" cy="125" rx="15" ry="10" fill="var(--aig-blue)" opacity="0.92" stroke="#fff" stroke-width="1"/>
+          <text x="150" y="128" font-size="6.5" fill="#fff" text-anchor="middle" font-family="Segoe UI">LatAm</text>
+          <circle cx="300" cy="90" r="13" fill="var(--aig-blue)" opacity="0.92" stroke="#fff" stroke-width="1"/>
+          <text x="300" y="93" font-size="8" fill="#fff" text-anchor="middle" font-family="Segoe UI">APAC</text>
+          <circle cx="255" cy="110" r="9" fill="var(--aig-blue)" opacity="0.92" stroke="#fff" stroke-width="1"/>
+          <text x="255" y="113" font-size="6" fill="#fff" text-anchor="middle" font-family="Segoe UI">MEA</text>
+        </svg>
+        <p class="muted" style="font-size:10.5px;margin-top:6px;">Stylized continent shapes for orientation, not geographically precise.</p>
+        <p class="muted" style="font-size:11.5px;margin-top:8px;">Marker size = underwriter headcount for the selected product/level. ACME has underwriters in roughly 40 countries; the map groups the smaller ones by region rather than trying to plot every one.</p>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>Why KPIs, not raw activity counts</h2></div>
+      <div class="wp-b">
+        <p>Raw counts (files reviewed, letters issued) don't tell leadership whether the program is working. The KPIs planned for this dashboard pair completion against findings, so a quiet queue and a productive one are easy to tell apart at a glance &mdash; and current-period figures are always shown against the prior period, which is the comparison CUOs actually look for, not a five-year trend line.</p>
+        <p>Underwriter performance itself is judged the same way &mdash; by objective throughput and quality measures (files processed, policies written, loss ratio), not a manager's subjective read. A manager who doesn't want to lose a direct report has every incentive to rate them well regardless of performance, so the KPIs are what stands in for that.</p>
+      </div>
+    </div>
+
+    <div class="wp">
+      <div class="wp-h"><h2>What leadership sees today, and what changes</h2></div>
+      <div class="wp-b">
+        <p>Product Development Governance reports on Personal Insurance products are shared with CUOs monthly. The near-term goal for this dashboard is to bring peer review and authority data to that same standard.</p>
+        <p>One thing worth building in deliberately: CEOs not reacting to a number isn't necessarily a good sign &mdash; it often just means they don't know what to do with it. A figure like "117% of quota" needs enough narrative attached that it prompts a real decision, not silence.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DOCUMENTS ============ -->
+  <section class="page" id="page-documents">
+    <div class="pagehead"><h1>Documents</h1></div>
+    <p class="lead">share.connect.acme/sites/GlobalUnderwritingGovernance/Shared Documents</p>
+
+    <div class="wp">
+      <div class="wp-h"><h2>All Documents</h2></div>
+      <div class="wp-b">
+        <div class="doclist">
+          <div class="docrow" onclick="openLink('docPeerGuidelines')"><span class="fi doc">DOC</span> Peer Review Guidelines &mdash; Service Programs 2026 <span class="meta">Today &middot; John Doe 2</span></div>
+          <div class="docrow" onclick="openLink('docQuotaReport')"><span class="fi xls">XLS</span> Quota Report &mdash; Q2 2026 (All Products) <span class="meta">Yesterday &middot; John Doe 1</span></div>
+          <div class="docrow" onclick="openLink('docAerospace')"><span class="fi xls">XLS</span> Aerospace Authority Extract <span class="meta">3 days ago &middot; John Doe 1</span></div>
+          <div class="docrow" onclick="openLink('docProdGov')"><span class="fi pdf">PDF</span> Product Governance Framework Overview &mdash; Jan 2026 <span class="meta">1 week ago &middot; UW Governance</span></div>
+          <div class="docrow" onclick="openLink('docAuthTraining')"><span class="fi ppt">PPT</span> Understanding Your Underwriting Authority &mdash; Training <span class="meta">2 weeks ago &middot; John Doe 1</span></div>
+          <div class="docrow" onclick="openLink('docSampleStatement')"><span class="fi doc">DOC</span> Commercial Property Authority Statement &mdash; Sample <span class="meta">3 weeks ago &middot; UW Governance</span></div>
+        </div>
+        <p class="muted" style="font-size:11.5px;margin-top:14px;">Sanitized mockup &mdash; file names shown for layout reference only; links point to placeholders until wired to the real library.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="gu-footer">
+  Global Underwriting Governance &middot; ACME Insurance Group &middot; GI Chief Underwriting Office &middot;
+  This is a sanitized design mockup &mdash; no production data or credentials.
+</footer>
+
+<script>
+// Placeholder link registry — swap "#" for real URLs later, one place to edit.
+const LINKS = {
+  guideAuthStatement: "#", guideAuthLevels: "#", guideQuota: "#", guideTiers: "#",
+  guideCommercialProperty: "#", guideCasualty: "#", guideFinancialLines: "#",
+  docPeerGuidelines: "#", docQuotaReport: "#", docAerospace: "#",
+  docProdGov: "#", docAuthTraining: "#", docSampleStatement: "#"
+};
+function openLink(key){
+  const url = LINKS[key];
+  if(url && url !== "#") window.open(url, "_blank");
+}
+
+function setRole(role){
+  document.querySelectorAll(".rolebtn").forEach(function(b){
+    b.classList.toggle("active", b.getAttribute("data-role") === role);
+  });
+  const rows = document.querySelectorAll("#actionList .docrow");
+  let visible = 0;
+  rows.forEach(function(row){
+    const roles = (row.getAttribute("data-roles") || "").split(",");
+    const show = roles.indexOf(role) !== -1;
+    row.classList.toggle("role-hidden", !show);
+    if(show) visible++;
+  });
+  const who = document.querySelector(".head-right .who .rl");
+  const labels = {underwriter:"Underwriter", submitter:"Submitter", approver:"Approver", superuser:"Super User"};
+  if(who) who.textContent = labels[role] || role;
+  const countEl = document.getElementById("roleCount");
+  if(countEl) countEl.textContent = visible + " function" + (visible === 1 ? "" : "s") + " available to this role.";
+}
+
+function go(pageId){
+  document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
+  const target = document.getElementById("page-" + pageId);
+  if(target) target.classList.add("active");
+  document.querySelectorAll(".nav button").forEach(function(b){ b.classList.remove("active"); });
+  const btn = document.querySelector('.nav button[data-page="' + pageId + '"]');
+  if(btn) btn.classList.add("active");
+  if(location.hash !== "#" + pageId){
+    try{ history.pushState(null, "", "#" + pageId); }
+    catch(e){ try{ location.hash = pageId; }catch(e2){ /* give up silently, page state already updated above */ } }
+  }
+  window.scrollTo(0,0);
+}
+
+function render(hash){
+  const id = (hash || "#home").replace("#", "");
+  const valid = ["home","about","tools","peer","reporting","documents"];
+  go(valid.includes(id) ? id : "home");
+}
+
+window.addEventListener("hashchange", function(){ render(location.hash); });
+setRole("approver");
+render(location.hash);
+</script>
+
+</body>
+</html>
